@@ -33,3 +33,22 @@ Examples:
 - Stream consumer Lambda: needs table Stream ARN + dynamodb:DescribeStream, GetRecords, GetShardIterator, ListStreams
 
 > All queries will use GetItem/Query only (no scans), per the assignment spec.
+
+
+## Phase 4 - DataStack — DynamoDB single-table (deployed)
+
+- Table: movies-app
+- Keys: id (PK, String), sk (SK, String)
+- Billing: On-Demand
+- Stream: NEW_AND_OLD_IMAGES
+- PITR: ON
+
+### Entity prefixes (spec)
+- Movie: PK = m{movieId}, SK = xxxx
+- Actor: PK = a{actorId}, SK = xxxx
+- Cast:  PK = c{movieId}, SK = {actorId}   # actorId stored as string
+- Award: PK = w{movieId} or w{actorId}, SK = {awardBody}
+
+Examples:
+- m1234 | xxxx | title, releaseDate, overview…
+- c1234 | 6789 | roleName, roleDescription…
