@@ -5,10 +5,15 @@
     "infra": "bin/infra.js"
   },
   "scripts": {
-    "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "build": "tsc",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy --all",
+    "destroy": "cdk destroy --all",
+    "list": "cdk list",
+    "diff": "cdk diff"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -23,4 +28,5 @@
     "aws-cdk-lib": "2.215.0",
     "constructs": "^10.0.0"
   }
+
 }

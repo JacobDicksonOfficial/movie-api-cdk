@@ -1,20 +1,27 @@
 #!/usr/bin/env node
-import * as cdk from 'aws-cdk-lib/core';
-import { InfraStack } from '../lib/infra-stack';
+import 'source-map-support/register';
+import * as cdk from 'aws-cdk-lib';
+import { AuthStack } from '../lib/auth-stack';
+import { DataStack } from '../lib/data-stack';
+import { AppApiStack } from '../lib/appapi-stack';
+import { OpsStack } from '../lib/ops-stack';
 
 const app = new cdk.App();
-new InfraStack(app, 'InfraStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
 
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+// Use the CLI/profile account & region. Default to eu-west-1 for clarity.
+const env = {
+  account: process.env.CDK_DEFAULT_ACCOUNT,
+  region: process.env.CDK_DEFAULT_REGION || 'eu-west-1',
+};
 
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
+// Foundation stacks (we’ll pass references later when resources exist)
+const data = new DataStack(app, 'DataStack', { env });
+const auth = new AuthStack(app, 'AuthStack', { env });
 
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
-});
+// App/API and Ops (no resources yet, just structure)
+const api = new AppApiStack(app, 'AppApiStack', { env });
+const ops = new OpsStack(app, 'OpsStack', { env });
+
+// Optional tags for billing/clarity
+cdk.Tags.of(app).add('Project', 'MovieAPI');
+cdk.Tags.of(app).add('Owner', 'JacobDickson');
