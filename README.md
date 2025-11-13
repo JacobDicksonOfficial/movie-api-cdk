@@ -78,3 +78,21 @@ Examples:
 - GET /awards (query: movie, actor, awardBody) (JWT required)
 - POST /movies (x-api-key required)
 - DELETE /movies/{movieId} (x-api-key required)
+
+## Phase 7 - Handlers (Lambdas for all routes)
+
+All handlers utilized:
+- Use DynamoDB GetItem / Query only (no Scan), matching single-table design.
+- Emit structured JSON logs to CloudWatch (GETs include `username`, admin routes include a hashed `adminKey`).
+- Read table name via `TABLE_NAME` env var (set by CDK).
+
+### Key Schema Updates
+- PK: `id` (String), SK: `sk` (String)
+- Movie: `id = m{movieId}`, `sk = xxxx`
+- Cast:  `id = c{movieId}`, `sk = {actorId}`
+- Award: `id = w{movieId}` or `w{actorId}`, `sk = {awardBody}`
+
+
+
+
+
