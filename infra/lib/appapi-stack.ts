@@ -7,6 +7,10 @@ import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as path from 'path';
 
+// Phase 10 extras:
+import * as logs from 'aws-cdk-lib/aws-logs';
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
+
 export interface AppApiStackProps extends StackProps {
   userPool: cognito.IUserPool;
   table: ddb.ITable;
@@ -69,6 +73,29 @@ export class AppApiStack extends Stack {
       handler: 'handler',
       ...defaults,
       timeout: Duration.seconds(15),
+    });
+
+    // Phase 10: 30-day log retention + simple error alarms
+    const apiFns = [
+      ['GetMovieFn', getMovieFn],
+      ['GetCastFn', getCastFn],
+      ['GetCastMemberFn', getCastMemberFn],
+      ['GetAwardsFn', getAwardsFn],
+      ['PostMovieFn', postMovieFn],
+      ['DeleteMovieFn', deleteMovieFn],
+    ] as const;
+
+    apiFns.forEach(([idSuffix, fn]) => {
+      new logs.LogRetention(this, `${idSuffix}Retention`, {
+        logGroupName: fn.logGroup.logGroupName,
+        retention: logs.RetentionDays.ONE_MONTH,
+      });
+      new cloudwatch.Alarm(this, `${idSuffix}Errors`, {
+        metric: fn.metricErrors(),
+        threshold: 1,
+        evaluationPeriods: 1,
+        datapointsToAlarm: 1,
+      });
     });
 
     // Permissions

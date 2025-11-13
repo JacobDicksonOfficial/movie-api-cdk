@@ -7,6 +7,10 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as path from 'path';
 
+// Phase 10 extras:
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
+import * as logs from 'aws-cdk-lib/aws-logs';
+
 export interface AuthStackProps extends StackProps {}
 
 export class AuthStack extends Stack {
@@ -40,8 +44,8 @@ export class AuthStack extends Stack {
       userPoolClientName: 'movie-api-client',
       generateSecret: false,
       authFlows: {
-        userPassword: true,    // USER_PASSWORD_AUTH
-        userSrp: true,         // SRP auth (optional)
+        userPassword: true,
+        userSrp: true,
       },
       preventUserExistenceErrors: true,
     });
@@ -78,7 +82,21 @@ export class AuthStack extends Stack {
     const loginFn    = nodeFn('LoginFn', 'login.ts');
     const logoutFn   = nodeFn('LogoutFn', 'logout.ts');
 
-    // Allow Lambdas to call Cognito IdP as needed later
+    // Phase 10: 30-day log retention + simple error alarms
+    [registerFn, loginFn, logoutFn].forEach((fn, i) => {
+      new logs.LogRetention(this, `AuthFnRetention${i}`, {
+        logGroupName: fn.logGroup.logGroupName,
+        retention: logs.RetentionDays.ONE_MONTH,
+      });
+      new cloudwatch.Alarm(this, `AuthFnErrors${i}`, {
+        metric: fn.metricErrors(),
+        threshold: 1,
+        evaluationPeriods: 1,
+        datapointsToAlarm: 1,
+      });
+    });
+
+    // Allow Lambdas to call Cognito IdP
     const idpActions = [
       'cognito-idp:SignUp',
       'cognito-idp:AdminConfirmSignUp',
@@ -95,7 +113,7 @@ export class AuthStack extends Stack {
       }));
     });
 
-    // 5) Wire routes
+    // 5) Routes
     const auth = this.authApi.root.addResource('auth');
     auth.addResource('register').addMethod('POST', new apigw.LambdaIntegration(registerFn));
     auth.addResource('login').addMethod('POST', new apigw.LambdaIntegration(loginFn));

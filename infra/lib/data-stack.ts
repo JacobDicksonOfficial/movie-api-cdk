@@ -6,11 +6,14 @@ import {
   StreamViewType,
   Table,
 } from 'aws-cdk-lib/aws-dynamodb';
-import { Runtime, StartingPosition } from 'aws-cdk-lib/aws-lambda'; // <-- StartingPosition here
+import { Runtime, StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources'; // <-- only DynamoEventSource here
+import { DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import * as path from 'path';
 
+// Phase 10 extras:
+import * as logs from 'aws-cdk-lib/aws-logs';
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 
 export interface DataStackProps extends StackProps {}
 
@@ -26,7 +29,8 @@ export class DataStack extends Stack {
       sortKey:      { name: 'sk', type: AttributeType.STRING },
       billingMode: BillingMode.PAY_PER_REQUEST,
       stream: StreamViewType.NEW_AND_OLD_IMAGES,
-      pointInTimeRecovery: true, 
+      // non-deprecated PITR field
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
     });
 
     this.table.applyRemovalPolicy(RemovalPolicy.DESTROY);
@@ -39,6 +43,18 @@ export class DataStack extends Stack {
       bundling: { minify: true, externalModules: [] },
       timeout: Duration.seconds(10),
       environment: { TABLE_NAME: this.table.tableName },
+    });
+
+    // Phase 10: 30-day log retention + simple error alarm
+    new logs.LogRetention(this, 'StateChangeLoggerFnRetention', {
+      logGroupName: stateLogger.logGroup.logGroupName,
+      retention: logs.RetentionDays.ONE_MONTH,
+    });
+    new cloudwatch.Alarm(this, 'StateChangeLoggerFnErrors', {
+      metric: stateLogger.metricErrors(),
+      threshold: 1,
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
     });
 
     stateLogger.addEventSource(
