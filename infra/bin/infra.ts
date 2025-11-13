@@ -15,13 +15,13 @@ const env = {
 const data = new DataStack(app, 'DataStack', { env });
 const auth = new AuthStack(app, 'AuthStack', { env });
 
-// 🔗 Pass the user pool to AppApiStack for the JWT authorizer
 const api = new AppApiStack(app, 'AppApiStack', {
   env,
   userPool: auth.userPool,
+  table: data.table,  
 });
 
-const ops = new OpsStack(app, 'OpsStack', { env });
+new OpsStack(app, 'OpsStack', { env });
 
 cdk.Tags.of(app).add('Project', 'MovieAPI');
 cdk.Tags.of(app).add('Owner', 'JacobDickson');
