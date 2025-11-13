@@ -15,10 +15,10 @@ const env = {
 const data = new DataStack(app, 'DataStack', { env });
 const auth = new AuthStack(app, 'AuthStack', { env });
 
-const api = new AppApiStack(app, 'AppApiStack', {
+new AppApiStack(app, 'AppApiStack', {
   env,
   userPool: auth.userPool,
-  table: data.table,  
+  table: data.table,   // ensure this is present
 });
 
 new OpsStack(app, 'OpsStack', { env });
