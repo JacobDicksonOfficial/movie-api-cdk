@@ -33,7 +33,6 @@
 
 ![alt text](api.png)
 
-![App API resources][api]
 
 ### 2) Seeded DynamoDB table
 
@@ -45,7 +44,6 @@
 
 ![alt text](db.png)
 
-![DynamoDB seeded items][db]
 
 ### 3) CloudWatch — User Activity log (GETs) & State Change log (POST/DELETE)
 
