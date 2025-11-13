@@ -52,3 +52,29 @@ Examples:
 Examples:
 - m1234 | xxxx | title, releaseDate, overview…
 - c1234 | 6789 | roleName, roleDescription…
+
+## Phase 5 — AuthStack (Cognito + Auth API) 
+
+- Cognito User Pool: `movie-api-users` (email sign-in, self-signup enabled, email auto-verify).
+- App Client: `movie-api-client` (no secret; supports `USER_PASSWORD_AUTH`).
+- Auth REST API: `movie-auth-api` with:
+  - `POST /auth/register`
+  - `POST /auth/login`
+  - `POST /auth/logout`
+- Lambdas for each route (currently stubbed → return HTTP 501 “not implemented yet”).
+- Least-privilege IAM so Lambdas can call Cognito IdP (SignUp/InitiateAuth/etc.).
+
+## Phase 6 - AppApiStack (REST API, Cognito authorizer for GETs, API Key for admin)
+
+- App REST API: movie-app-api (stage prod, CORS open for demo).
+- Cognito JWT Authorizer (User Pool from AuthStack): Required on GET endpoints
+
+- API Key + Usage Plan for admin routes: API Key name: movie-admin-key
+
+### Routes (mock integrations returning 501 until Lambdas are added):
+- GET /movies/{movieId} (JWT required)
+- GET /movies/{movieId}/actors (JWT required)
+- GET /movies/{movieId}/actors/{actorId}(JWT required)
+- GET /awards (query: movie, actor, awardBody) (JWT required)
+- POST /movies (x-api-key required)
+- DELETE /movies/{movieId} (x-api-key required)
