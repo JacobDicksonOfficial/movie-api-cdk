@@ -1,108 +1,97 @@
-﻿# Movie API — AWS CDK
+﻿# Assignment — Cloud App Development
 
-Status: Phases 0–1 completed (tooling + AWS account/CLI + CDK bootstrap).<br>
-Region: eu-west-1<br>
-AWS CLI profile: movie-api<br>
-Next: scaffold CDK app under infra/.
+**Name:** Jacob Dickson  
+**Project:** Movie API — AWS CDK (IaC, Serverless)  
+**Region:** eu-west-1  
+**Stacks:** `AuthStack`, `DataStack`, `AppApiStack` (CDK / CloudFormation)
 
+---
 
-## Phase 3 — DataStack plan (design only)
+## Links
 
-- Stack (logical): DataStack
-- Table (physical): movie-api-table
-- Region: eu-west-1
-- Keys: id (PK, String), sk (SK, String)
-- Billing: On-Demand (Pay-Per-Request)
-- PITR: ON (for safety)
-- RemovalPolicy (dev): DESTROY
-- Stream: NEW_AND_OLD_IMAGES
+- **GitHub repo:** https://github.com/JacobDicksonOfficial/movie-api-cdk  
+- **Demo video:** _[add YouTube link here]_  
+- **Auth API base URL:** _[from CloudFormation → AuthStack Outputs → `AuthApiUrl`]_  
+- **App API base URL:** _[from CloudFormation → AppApiStack Outputs → `AppApiUrl`]_
 
-### Entity key prefixes
-- Movie: PK = m<movieId>, SK = xxxx
-- Actor: PK = a<actorId>, SK = xxxx
-- Cast:  PK = c<movieId>, SK = <actorId>
-- Award: PK = w<movieId> or w<actorId>, SK = <awardBody>
+> _Note:_ The Auth API code follows the labs. This assignment focuses on the App API per spec.
 
-Examples:
-- m1234 | xxxx | "The Shawshank Redemption" | 05-03-1995 | "overview…"
-- c1234 | 6789 | "Ellis Redding" | "role description…"
+---
 
-### IAM plan (for later stacks)
-- GET Lambdas: dynamodb:GetItem, dynamodb:Query
-- Admin Lambdas (POST/DELETE): dynamodb:PutItem, dynamodb:DeleteItem, dynamodb:BatchWriteItem
-- Stream consumer Lambda: needs table Stream ARN + dynamodb:DescribeStream, GetRecords, GetShardIterator, ListStreams
+## Screenshots
 
-> All queries will use GetItem/Query only (no scans), per the assignment spec.
+### 1) App Web API (management console)
 
+- Console → **API Gateway** → **movie-app-api** → **Resources**.  
+- Expand to show:
+  - `GET /movies/{movieId}` (Cognito authorizer)
+  - `GET /movies/{movieId}/actors`
+  - `GET /movies/{movieId}/actors/{actorId}`
+  - `GET /awards` (with query string)
+  - `POST /movies` (**x-api-key** required)
+  - `DELETE /movies/{movieId}` (**x-api-key** required)
 
-## Phase 4 - DataStack — DynamoDB single-table (deployed)
+![alt text](api.png)
 
-- Table: movies-app
-- Keys: id (PK, String), sk (SK, String)
-- Billing: On-Demand
-- Stream: NEW_AND_OLD_IMAGES
-- PITR: ON
+![App API resources][api]
 
-### Entity prefixes (spec)
-- Movie: PK = m{movieId}, SK = xxxx
-- Actor: PK = a{actorId}, SK = xxxx
-- Cast:  PK = c{movieId}, SK = {actorId}   # actorId stored as string
-- Award: PK = w{movieId} or w{actorId}, SK = {awardBody}
+### 2) Seeded DynamoDB table
 
-Examples:
-- m1234 | xxxx | title, releaseDate, overview…
-- c1234 | 6789 | roleName, roleDescription…
+- Console → **DynamoDB** → **Tables** → `movies-app` → **Explore items**.  
+- Show a mix of items to demonstrate the single-table prefixes:
+  - Movie: `id = m1001 | sk = xxxx`
+  - Cast : `id = c1001 | sk = 2001`
+  - Award: `id = w1001 | sk = Academy`
 
-## Phase 5 — AuthStack (Cognito + Auth API) 
+![alt text](db.png)
 
-- Cognito User Pool: `movie-api-users` (email sign-in, self-signup enabled, email auto-verify).
-- App Client: `movie-api-client` (no secret; supports `USER_PASSWORD_AUTH`).
-- Auth REST API: `movie-auth-api` with:
-  - `POST /auth/register`
-  - `POST /auth/login`
-  - `POST /auth/logout`
-- Lambdas for each route (currently stubbed → return HTTP 501 “not implemented yet”).
-- Least-privilege IAM so Lambdas can call Cognito IdP (SignUp/InitiateAuth/etc.).
+![DynamoDB seeded items][db]
 
-## Phase 6 - AppApiStack (REST API, Cognito authorizer for GETs, API Key for admin)
+### 3) CloudWatch — User Activity log (GETs) & State Change log (POST/DELETE)
 
-- App REST API: movie-app-api (stage prod, CORS open for demo).
-- Cognito JWT Authorizer (User Pool from AuthStack): Required on GET endpoints
+- Console → **CloudWatch** → **Logs** → **Log groups** → `/aws/lambda/GetMovieFn` (or any GET fn).  
+  - Find a line like:
+    ```
+    doconnor /movies/1001
+    ```
+- Console → **CloudWatch** → **Logs** → `/aws/lambda/StateChangeLoggerFn`.  
+  - Find lines like:
+    ```
+    POST + w1001 | Academy | Best Movie | 1995
+    DELETE m1002 | xxxx | The Dark Knight | 18-07-2008 | ...
+    ```
 
-- API Key + Usage Plan for admin routes: API Key name: movie-admin-key
+## What’s deployed (design summary)
 
-### Routes (mock integrations returning 501 until Lambdas are added):
-- GET /movies/{movieId} (JWT required)
-- GET /movies/{movieId}/actors (JWT required)
-- GET /movies/{movieId}/actors/{actorId}(JWT required)
-- GET /awards (query: movie, actor, awardBody) (JWT required)
-- POST /movies (x-api-key required)
-- DELETE /movies/{movieId} (x-api-key required)
+### Single-table DynamoDB (`movies-app`)
+- **Keys:** `id` (PK, String), `sk` (SK, String)  
+- **Billing:** On-Demand, **PITR:** ON, **Streams:** `NEW_AND_OLD_IMAGES`
+- **Entity keying (prefix) rules:**
+  - **Movie**: `id = m{movieId}`, `sk = xxxx`
+  - **Actor**: `id = a{actorId}`, `sk = xxxx`
+  - **Cast** : `id = c{movieId}`, `sk = {actorId}` (string)
+  - **Award**: `id = w{movieId}` or `w{actorId}`, `sk = {awardBody}`
+- **Access pattern policy:** Only **GetItem/Query**, no scans.
 
-## Phase 7 - Handlers (Lambdas for all routes)
+### Auth (Cognito + Auth API)
+- **User Pool:** `movie-api-users`, email sign-in, self-signup, email verify.  
+- **Client:** `movie-api-client` (no secret).  
+- **Auth API (REST):** `/auth/register`, `/auth/login`, `/auth/logout`.
 
-All handlers utilized:
-- Use DynamoDB GetItem / Query only (no Scan), matching single-table design.
-- Emit structured JSON logs to CloudWatch (GETs include `username`, admin routes include a hashed `adminKey`).
-- Read table name via `TABLE_NAME` env var (set by CDK).
+### App API (REST)
+- **GET** routes → **Cognito JWT** required via **User Pools Authorizer**.
+- **POST/DELETE** → **API Key + Usage Plan** (admin).
+- Routes:
+  - `GET /movies/{movieId}`
+  - `GET /movies/{movieId}/actors`
+  - `GET /movies/{movieId}/actors/{actorId}`
+  - `GET /awards?movie=&actor=&awardBody=` (all combinations supported)
+  - `POST /movies`
+  - `DELETE /movies/{movieId}` (cascade delete cast & awards)
 
-### Key Schema Updates
-- PK: `id` (String), SK: `sk` (String)
-- Movie: `id = m{movieId}`, `sk = xxxx`
-- Cast:  `id = c{movieId}`, `sk = {actorId}`
-- Award: `id = w{movieId}` or `w{actorId}`, `sk = {awardBody}`
-
-## Phase 8 — Logging & State-Change Streams 
-
-1. Implementation for any GET route with a valid JWT.  
-2. CloudWatch Logs → Log groups → /aws/lambda/ → latest stream 
-3. Find the plain line (`username path?query`) and the JSON diagnostic entry.
-
-### Operational Notes
-- No DynamoDB **Scan** anywhere; all handlers use GetItem / Query.
-- GET logs include **username** for analytics use-cases.
-- Stream consumer is **decoupled**; API latency not affected by logging.
-- Uses CDK **DynamoEventSource** with retry + bisect on error for resilience.
-
-
-
+### Logging & Ops
+- **GET** Lambdas log: `<username> <path?query>`.  
+- **StateChangeLoggerFn** (DynamoDB Stream consumer) logs:
+  - `POST + <item printable>`
+  - `DELETE <item printable>`
+- **CloudWatch**: log retention set to 30 days and a basic Lambda error alarm
