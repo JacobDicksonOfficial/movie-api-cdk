@@ -1,0 +1,17 @@
+{
+  "movies-app": [
+    { "PutRequest": { "Item": { "id": {"S": "m1001"}, "sk": {"S": "xxxx"}, "title": {"S": "The Shawshank Redemption"}, "releaseDate": {"S": "05-03-1995"}, "overview": {"S": "A banker convicted of uxoricide forms a friendship..."} } } },
+    { "PutRequest": { "Item": { "id": {"S": "m1002"}, "sk": {"S": "xxxx"}, "title": {"S": "The Dark Knight"}, "releaseDate": {"S": "18-07-2008"}, "overview": {"S": "Batman faces the Joker in Gotham."} } } },
+
+    { "PutRequest": { "Item": { "id": {"S": "a2001"}, "sk": {"S": "xxxx"}, "name": {"S": "Morgan Freeman"}, "bio": {"S": "Born in Memphis..."}, "dob": {"S": "01-06-1937"} } } },
+    { "PutRequest": { "Item": { "id": {"S": "a2002"}, "sk": {"S": "xxxx"}, "name": {"S": "Tim Robbins"}, "bio": {"S": "American actor..."}, "dob": {"S": "16-10-1958"} } } },
+    { "PutRequest": { "Item": { "id": {"S": "a2003"}, "sk": {"S": "xxxx"}, "name": {"S": "Christian Bale"}, "bio": {"S": "Welsh actor..."}, "dob": {"S": "30-01-1974"} } } },
+
+    { "PutRequest": { "Item": { "id": {"S": "c1001"}, "sk": {"S": "2001"}, "roleName": {"S": "Ellis Redding"}, "roleDescription": {"S": "Contraband smuggler"} } } },
+    { "PutRequest": { "Item": { "id": {"S": "c1001"}, "sk": {"S": "2002"}, "roleName": {"S": "Andy Dufresne"}, "roleDescription": {"S": "Banker convicted of murder"} } } },
+    { "PutRequest": { "Item": { "id": {"S": "c1002"}, "sk": {"S": "2003"}, "roleName": {"S": "Bruce Wayne"}, "roleDescription": {"S": "Batman"} } } },
+
+    { "PutRequest": { "Item": { "id": {"S": "w1001"}, "sk": {"S": "Academy"}, "body": {"S": "Academy"}, "category": {"S": "Best Picture"}, "year": {"N": "1995"} } } },
+    { "PutRequest": { "Item": { "id": {"S": "w2001"}, "sk": {"S": "GoldenGlobe"}, "body": {"S": "GoldenGlobe"}, "category": {"S": "Best Supporting Actor"}, "year": {"N": "1995"} } } }
+  ]
+}

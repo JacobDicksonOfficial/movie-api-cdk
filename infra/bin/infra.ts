@@ -18,7 +18,7 @@ const auth = new AuthStack(app, 'AuthStack', { env });
 new AppApiStack(app, 'AppApiStack', {
   env,
   userPool: auth.userPool,
-  table: data.table,   // ensure this is present
+  table: data.table,   
 });
 
 new OpsStack(app, 'OpsStack', { env });

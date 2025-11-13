@@ -92,7 +92,17 @@ All handlers utilized:
 - Cast:  `id = c{movieId}`, `sk = {actorId}`
 - Award: `id = w{movieId}` or `w{actorId}`, `sk = {awardBody}`
 
+## Phase 8 — Logging & State-Change Streams 
 
+1. Implementation for any GET route with a valid JWT.  
+2. CloudWatch Logs → Log groups → /aws/lambda/ → latest stream 
+3. Find the plain line (`username path?query`) and the JSON diagnostic entry.
+
+### Operational Notes
+- No DynamoDB **Scan** anywhere; all handlers use GetItem / Query.
+- GET logs include **username** for analytics use-cases.
+- Stream consumer is **decoupled**; API latency not affected by logging.
+- Uses CDK **DynamoEventSource** with retry + bisect on error for resilience.
 
 
 
